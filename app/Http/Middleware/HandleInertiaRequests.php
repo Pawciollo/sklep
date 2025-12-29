@@ -42,10 +42,14 @@ class HandleInertiaRequests extends Middleware
             ...parent::share($request),
             'name' => config('app.name'),
             'quote' => ['message' => trim($message), 'author' => trim($author)],
+
+            // ✅ Wymuszamy jasny motyw dla frontu (Inertia/React)
+            'appearance' => 'light',
+
             'auth' => [
                 'user' => fn () => $request->user()
-                ? $request->user()->only('id', 'name', 'email', 'is_admin')
-                : null,
+                    ? $request->user()->only('id', 'name', 'email', 'is_admin')
+                    : null,
             ],
             'flash' => fn () => [
                 'success' => session('success'),

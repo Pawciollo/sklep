@@ -45,7 +45,10 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended('/');
+        // ✅ Zachowujemy intended (jak redirect()->intended('/')), ale wymuszamy pełny reload
+        $intended = $request->session()->pull('url.intended', '/');
+
+        return Inertia::location($intended);
     }
 
     /**
@@ -58,6 +61,7 @@ class AuthenticatedSessionController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect('/');
+        // ✅ Pełny reload po wylogowaniu
+        return Inertia::location('/');
     }
 }
