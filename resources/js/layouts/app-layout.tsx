@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Link, usePage } from "@inertiajs/react";
+import { Link, router, usePage } from "@inertiajs/react";
 
 type SharedUser = {
   id: number;
@@ -30,6 +30,21 @@ export default function AppLayout({ children, breadcrumbs = [] }: Props) {
 
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
+
+  const handleLogout = (): void => {
+    setMenuOpen(false);
+
+    router.post(
+      "/logout",
+      {},
+      {
+        onSuccess: () => {
+          // Wymuszamy pełne odświeżenie, żeby wyczyścić stan SPA po wylogowaniu
+          window.location.reload();
+        },
+      }
+    );
+  };
 
   // zamknij dropdown po kliknięciu poza
   useEffect(() => {
@@ -95,28 +110,30 @@ export default function AppLayout({ children, breadcrumbs = [] }: Props) {
                     </Link>
 
                     <Link
-                        href="/settings/profile"
-                        className="block px-4 py-2 text-sm hover:bg-gray-50"
-                        onClick={() => setMenuOpen(false)}
+                      href="/settings/profile"
+                      className="block px-4 py-2 text-sm hover:bg-gray-50"
+                      onClick={() => setMenuOpen(false)}
                     >
-                        Ustawienia konta
+                      Ustawienia konta
                     </Link>
 
                     {user.is_admin && (
-                        <Link href="/admin" className="block px-4 py-2 text-sm hover:bg-gray-50" onClick={() => setMenuOpen(false)}>
-                            Panel admina
-                        </Link>
+                      <Link
+                        href="/admin"
+                        className="block px-4 py-2 text-sm hover:bg-gray-50"
+                        onClick={() => setMenuOpen(false)}
+                      >
+                        Panel admina
+                      </Link>
                     )}
 
-                    <Link
-                      href="/logout"
-                      method="post"
-                      as="button"
+                    <button
+                      type="button"
                       className="w-full text-left block px-4 py-2 text-sm hover:bg-gray-50"
-                      onClick={() => setMenuOpen(false)}
+                      onClick={handleLogout}
                     >
                       Wyloguj
-                    </Link>
+                    </button>
                   </div>
                 )}
               </div>
