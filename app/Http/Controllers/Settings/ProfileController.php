@@ -29,15 +29,22 @@ class ProfileController extends Controller
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        $request->user()->fill($request->validated());
+        $user = $request->user();
 
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
+        // Bierzemy tylko zwalidowane dane, ale dodatkowo WYKLUCZAMY hasło,
+        // żeby profil nigdy nie mógł nadpisać password (np. pustym stringiem).
+        $data = $request->validated();
+        unset($data['password'], $data['current_password'], $data['password_confirmation']);
+
+        $user->fill($data);
+
+        if ($user->isDirty('email')) {
+            $user->email_verified_at = null;
         }
 
-        $request->user()->save();
+        $user->save();
 
-        return to_route('profile.edit');
+        return to_route('profile.edit')->with('status', 'profile-updated');
     }
 
     /**

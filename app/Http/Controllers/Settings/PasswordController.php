@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Settings;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -17,7 +16,9 @@ class PasswordController extends Controller
      */
     public function edit(): Response
     {
-        return Inertia::render('settings/password');
+        return Inertia::render('settings/password', [
+            'status' => session('status'),
+        ]);
     }
 
     /**
@@ -30,10 +31,13 @@ class PasswordController extends Controller
             'password' => ['required', Password::defaults(), 'confirmed'],
         ]);
 
-        $request->user()->update([
-            'password' => Hash::make($validated['password']),
-        ]);
+        $user = $request->user();
 
-        return back();
+        // Dzięki castowi 'password' => 'hashed' w User model,
+        // przypisanie plain-text hasła zapisze poprawny hash.
+        $user->password = $validated['password'];
+        $user->save();
+
+        return back()->with('status', 'password-updated');
     }
 }
