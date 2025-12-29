@@ -26,6 +26,9 @@ export default function Login({ status, canResetPassword }: LoginProps) {
             <Form
                 {...AuthenticatedSessionController.store.form()}
                 resetOnSuccess={['password']}
+                onSuccess={() => {
+                    window.location.replace('/');
+                }}
                 className="flex flex-col gap-6"
             >
                 {({ processing, errors }) => (
@@ -50,7 +53,11 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                                 <div className="flex items-center">
                                     <Label htmlFor="password">Hasło</Label>
                                     {canResetPassword && (
-                                        <TextLink href="/forgot-password" className="ml-auto text-sm" tabIndex={5}>
+                                        <TextLink
+                                            href="/forgot-password"
+                                            className="ml-auto text-sm"
+                                            tabIndex={5}
+                                        >
                                             Nie pamiętasz hasła?
                                         </TextLink>
                                     )}

@@ -22,6 +22,9 @@ export default function Register() {
                 {...RegisteredUserController.store.form()}
                 resetOnSuccess={['password', 'password_confirmation']}
                 disableWhileProcessing
+                onSuccess={() => {
+                    window.location.replace('/');
+                }}
                 className="flex flex-col gap-6"
             >
                 {({ processing, errors }) => (
@@ -32,11 +35,11 @@ export default function Register() {
                                 <Input
                                     id="name"
                                     type="text"
+                                    name="name"
                                     required
                                     autoFocus
                                     tabIndex={1}
                                     autoComplete="name"
-                                    name="name"
                                     placeholder="Jan Kowalski"
                                 />
                                 <InputError message={errors.name} className="mt-2" />
@@ -47,10 +50,10 @@ export default function Register() {
                                 <Input
                                     id="email"
                                     type="email"
+                                    name="email"
                                     required
                                     tabIndex={2}
                                     autoComplete="email"
-                                    name="email"
                                     placeholder="email@przyklad.pl"
                                 />
                                 <InputError message={errors.email} />
@@ -61,10 +64,10 @@ export default function Register() {
                                 <Input
                                     id="password"
                                     type="password"
+                                    name="password"
                                     required
                                     tabIndex={3}
                                     autoComplete="new-password"
-                                    name="password"
                                     placeholder="Ustaw hasło"
                                 />
                                 <InputError message={errors.password} />
@@ -75,10 +78,10 @@ export default function Register() {
                                 <Input
                                     id="password_confirmation"
                                     type="password"
+                                    name="password_confirmation"
                                     required
                                     tabIndex={4}
                                     autoComplete="new-password"
-                                    name="password_confirmation"
                                     placeholder="Powtórz hasło"
                                 />
                                 <InputError message={errors.password_confirmation} />
@@ -98,7 +101,7 @@ export default function Register() {
                         <div className="text-center text-sm text-muted-foreground">
                             Masz już konto?{' '}
                             <TextLink href={login()} tabIndex={6}>
-                                Zaloguj się
+                                Zaloguj
                             </TextLink>
                         </div>
                     </>
