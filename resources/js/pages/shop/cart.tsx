@@ -26,6 +26,14 @@ function formatPrice(cents: number): string {
     return (cents / 100).toFixed(2) + ' zł';
 }
 
+function imageUrl(path: string): string {
+    if (!path) return path;
+    if (path.startsWith('http://') || path.startsWith('https://')) return path;
+    if (path.startsWith('/storage/')) return path;
+    if (path.startsWith('storage/')) return '/' + path;
+    return `/storage/${path.replace(/^\/+/, '')}`;
+}
+
 export default function Cart() {
     const [cart, setCart] = useState<CartResponse>({ items: [], total: 0 });
     const [loading, setLoading] = useState(true);
@@ -148,17 +156,9 @@ export default function Cart() {
                     ← Wróć do sklepu
                 </a>
 
-                {error && (
-                    <div className="mt-4 rounded bg-red-100 text-red-700 px-4 py-2">
-                        {error}
-                    </div>
-                )}
+                {error && <div className="mt-4 rounded bg-red-100 text-red-700 px-4 py-2">{error}</div>}
 
-                {message && (
-                    <div className="mt-4 rounded bg-green-100 text-green-700 px-4 py-2">
-                        {message}
-                    </div>
-                )}
+                {message && <div className="mt-4 rounded bg-green-100 text-green-700 px-4 py-2">{message}</div>}
 
                 {nearStockMessages.length > 0 && (
                     <div className="mt-4 rounded bg-yellow-50 text-yellow-800 px-4 py-2 text-sm space-y-1">
@@ -176,7 +176,9 @@ export default function Cart() {
                     <>
                         <div className="mt-6 space-y-4">
                             {cart.items.map((item) => {
-                                const thumb = item.product.images?.[0] ?? null;
+                                const thumbRaw = item.product.images?.[0] ?? null;
+                                const thumb = thumbRaw ? imageUrl(thumbRaw) : null;
+
                                 const stock = item.product.stock ?? null;
 
                                 const canMinus = item.quantity > 1;
@@ -190,9 +192,24 @@ export default function Cart() {
                                                     src={thumb}
                                                     alt={item.product.name}
                                                     className="w-16 h-16 object-cover rounded"
+                                                    onError={(e) => {
+                                                        // jeśli obrazek faktycznie nie istnieje / zła ścieżka:
+                                                        (e.currentTarget as HTMLImageElement).style.display = 'none';
+                                                    }}
                                                 />
-                                            ) : (
+                                            ) : null}
+
+                                            {!thumb && (
                                                 <div className="w-16 h-16 bg-gray-200 rounded flex items-center justify-center text-gray-500 text-xs">
+                                                    Brak
+                                                </div>
+                                            )}
+
+                                            {thumb && (
+                                                <div
+                                                    className="w-16 h-16 bg-gray-200 rounded items-center justify-center text-gray-500 text-xs hidden"
+                                                    aria-hidden="true"
+                                                >
                                                     Brak
                                                 </div>
                                             )}
@@ -216,9 +233,7 @@ export default function Cart() {
                                                     −
                                                 </button>
 
-                                                <div className="w-10 text-center text-sm font-medium">
-                                                    {item.quantity}
-                                                </div>
+                                                <div className="w-10 text-center text-sm font-medium">{item.quantity}</div>
 
                                                 <button
                                                     type="button"
@@ -229,18 +244,12 @@ export default function Cart() {
                                                     +
                                                 </button>
 
-                                                {stock !== null && (
-                                                    <div className="ml-2 text-xs text-gray-500">
-                                                        Stan: {stock}
-                                                    </div>
-                                                )}
+                                                {stock !== null && <div className="ml-2 text-xs text-gray-500">Stan: {stock}</div>}
                                             </div>
                                         </div>
 
                                         <div className="text-right">
-                                            <div className="font-bold text-gray-900">
-                                                {formatPrice(item.subtotal)}
-                                            </div>
+                                            <div className="font-bold text-gray-900">{formatPrice(item.subtotal)}</div>
                                             <button
                                                 type="button"
                                                 disabled={busyItemId === item.id}

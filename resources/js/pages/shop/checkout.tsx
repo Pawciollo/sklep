@@ -69,6 +69,59 @@ function paymentLabel(m: PaymentMethod): string {
     return m === 'przelew' ? 'Przelew' : 'Płatność przy odbiorze';
 }
 
+/**
+ * Front-only spolszczenie walidacji:
+ * - nie tłumaczymy angielskich zdań (kruche),
+ * - opieramy się o klucz pola, który backend zwraca w `errors`.
+ */
+const REQUIRED_MESSAGE_PL: Record<string, string> = {
+    customer_name: 'Pole imię i nazwisko jest wymagane.',
+    customer_email: 'Pole adres e-mail jest wymagane.',
+    customer_phone: 'Pole numer telefonu jest wymagane.',
+    address_line1: 'Pole adres jest wymagane.',
+    address_line2: 'Pole adres (cd.) jest wymagane.',
+    city: 'Pole miasto jest wymagane.',
+    postal_code: 'Pole kod pocztowy jest wymagane.',
+    country: 'Pole kraj jest wymagane.',
+    delivery_method: 'Wybierz metodę dostawy.',
+    payment_method: 'Wybierz metodę płatności.',
+};
+
+const FIELD_LABEL_PL: Record<string, string> = {
+    customer_name: 'imię i nazwisko',
+    customer_email: 'adres e-mail',
+    customer_phone: 'numer telefonu',
+    address_line1: 'adres',
+    address_line2: 'adres (cd.)',
+    city: 'miasto',
+    postal_code: 'kod pocztowy',
+    country: 'kraj',
+    delivery_method: 'metoda dostawy',
+    payment_method: 'metoda płatności',
+};
+
+function polishValidationMessage(fieldKey: string, backendMsg: string): string {
+    const lower = backendMsg.trim().toLowerCase();
+
+    // email
+    if (fieldKey === 'customer_email' && (lower.includes('valid email') || lower.includes('email address'))) {
+        return 'Pole adres e-mail musi być poprawnym adresem e-mail.';
+    }
+
+    // numeric / number (jeśli kiedykolwiek dojdzie)
+    if (lower.includes('must be a number') || lower.includes('must be numeric') || lower.includes('must be an integer')) {
+        const label = FIELD_LABEL_PL[fieldKey] ?? fieldKey;
+        return `Pole ${label} musi być liczbą.`;
+    }
+
+    // default: required (najczęstsze)
+    if (REQUIRED_MESSAGE_PL[fieldKey]) return REQUIRED_MESSAGE_PL[fieldKey];
+
+    // fallback po polsku
+    const label = FIELD_LABEL_PL[fieldKey] ?? fieldKey;
+    return `Formularz zawiera błąd w polu: ${label}.`;
+}
+
 export default function Checkout() {
     const { defaultForm, isAuthenticated, userId } = usePage<PageProps>().props;
 
@@ -193,7 +246,12 @@ export default function Checkout() {
                     const errors = (data as { errors?: Record<string, string[]> }).errors;
                     const firstKey = errors ? Object.keys(errors)[0] : undefined;
                     const firstMsg = firstKey ? errors?.[firstKey]?.[0] : undefined;
-                    throw new Error(firstMsg ?? 'Błąd walidacji formularza.');
+
+                    if (firstKey && typeof firstMsg === 'string') {
+                        throw new Error(polishValidationMessage(firstKey, firstMsg));
+                    }
+
+                    throw new Error('Formularz zawiera błędy. Sprawdź wymagane pola.');
                 }
 
                 const msg =

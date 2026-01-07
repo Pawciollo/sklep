@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, usePage } from "@inertiajs/react";
 import AppLayout from "@/layouts/app-layout";
 
@@ -47,6 +47,9 @@ export default function ProductShow() {
 
   const sessionId = "demo-session";
 
+  // kontrola czasu wyświetlania komunikatu (żeby timery się nie nakładały)
+  const messageTimeoutRef = useRef<number | null>(null);
+
   useEffect(() => {
     async function loadProduct() {
       try {
@@ -75,6 +78,15 @@ export default function ProductShow() {
     loadProduct();
   }, [slug]);
 
+  // cleanup timera przy wyjściu ze strony
+  useEffect(() => {
+    return () => {
+      if (messageTimeoutRef.current !== null) {
+        window.clearTimeout(messageTimeoutRef.current);
+      }
+    };
+  }, []);
+
   async function addToCart() {
     if (!product) return;
 
@@ -100,7 +112,14 @@ export default function ProductShow() {
       }
 
       setMessage("Produkt dodany do koszyka!");
-      setTimeout(() => setMessage(null), 2000);
+
+      // wydłużamy czas i zapobiegamy nakładaniu timerów
+      if (messageTimeoutRef.current !== null) {
+        window.clearTimeout(messageTimeoutRef.current);
+      }
+
+      const MESSAGE_VISIBLE_MS = 8000; // <- tu zmieniasz czas, np. 6000 / 10000
+      messageTimeoutRef.current = window.setTimeout(() => setMessage(null), MESSAGE_VISIBLE_MS);
     } catch (e: unknown) {
       console.error(e);
       setError(e instanceof Error ? e.message : "Wystąpił błąd przy dodawaniu do koszyka.");
@@ -134,21 +153,28 @@ export default function ProductShow() {
           ← Wróć do produktów
         </Link>
 
-        <div className="text-sm text-gray-500">
-          {product.category?.name}
-        </div>
+        <div className="text-sm text-gray-500">{product.category?.name}</div>
       </div>
 
       {message && (
-        <div className="mb-4 rounded-xl border bg-green-50 text-green-800 px-4 py-3">
-          {message}
+        <div className="fixed top-20 left-1/2 z-50 w-[min(100%-2rem,1100px)] -translate-x-1/2">
+            <div className="rounded-xl border bg-green-50 text-green-800 px-4 py-3 shadow-sm">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="text-sm font-medium">{message}</div>
+
+                <Link
+                href="/cart"
+                className="inline-flex items-center justify-center rounded-xl bg-green-700 px-4 py-2 text-sm font-medium text-white hover:bg-green-800 transition"
+                >
+                Przejdź do koszyka
+                </Link>
+            </div>
+            </div>
         </div>
-      )}
+        )}
 
       {error && (
-        <div className="mb-4 rounded-xl border bg-red-50 text-red-700 px-4 py-3">
-          {error}
-        </div>
+        <div className="mb-4 rounded-xl border bg-red-50 text-red-700 px-4 py-3">{error}</div>
       )}
 
       <div className="grid gap-8 lg:grid-cols-2 items-start">
@@ -204,9 +230,7 @@ export default function ProductShow() {
           </div>
 
           {product.description && (
-            <p className="mt-6 text-gray-700 whitespace-pre-line leading-relaxed">
-              {product.description}
-            </p>
+            <p className="mt-6 text-gray-700 whitespace-pre-line leading-relaxed">{product.description}</p>
           )}
 
           <div className="mt-8">
@@ -227,9 +251,7 @@ export default function ProductShow() {
             )}
           </div>
 
-          <div className="mt-4 text-xs text-gray-500">
-            W razie pytań: support@sklepfitness.pl
-          </div>
+          <div className="mt-4 text-xs text-gray-500">W razie pytań: support@sklepfitness.pl</div>
         </div>
       </div>
     </div>
